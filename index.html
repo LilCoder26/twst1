@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Velox Search Engine</title>
+    <link href="https://googleapis.com" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Lato', sans-serif;
+        }
+
+        body {
+            background-color: #0b0f14;
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            padding: 16px 40px;
+            background-color: #111823; 
+            border-bottom: 2px solid #0782d2;
+            gap: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .logo-container img {
+            height: 38px;
+            display: block;
+        }
+
+        .search-box {
+            display: flex;
+            flex-grow: 1;
+            max-width: 650px;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 20px;
+            background-color: #1a2332;
+            border: 1px solid #24344d;
+            border-radius: 24px;
+            color: #ffffff;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .search-box input:focus {
+            border-color: #0782d2; 
+            box-shadow: 0 0 8px rgba(7, 130, 210, 0.4);
+        }
+
+        .workspace {
+            display: flex;
+            padding: 30px 40px;
+            gap: 40px;
+            flex-grow: 1;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .web-results {
+            flex: 1;
+            max-width: 650px;
+            display: none; 
+        }
+
+        .result-item {
+            margin-bottom: 28px;
+        }
+
+        .result-item .url {
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 4px;
+            word-break: break-all;
+        }
+
+        .result-item a {
+            text-decoration: none;
+        }
+
+        .result-item h3 {
+            color: #38bdf8;
+            font-size: 19px;
+            margin-bottom: 6px;
+            font-weight: 700;
+        }
+
+        .result-item h3:hover {
+            text-decoration: underline;
+        }
+
+        .result-item p {
+            color: #cbd5e1;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .ai-sidebar {
+            width: 400px;
+            background-color: #111823;
+            border: 1px solid #1e293b;
+            border-top: 4px solid #0782d2;
+            border-radius: 12px;
+            padding: 24px;
+            height: fit-content;
+            display: none;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            flex-shrink: 0;
+        }
+
+        .ai-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            border-bottom: 1px solid #1e293b;
+            padding-bottom: 12px;
+        }
+
+        .ai-badge {
+            background-color: #0782d2;
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 3px 9px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .ai-header h2 {
+            font-size: 16px;
+            color: #ffffff;
+            font-weight: 700;
+        }
+
+        .ai-content {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #e2e8f0;
+            white-space: pre-line;
+        }
+
+        .loading-pulse {
+            color: #64748b;
+            font-style: italic;
+            animation: pulse 1.5s infinite ease-in-out;
+            display: block;
+            margin-bottom: 15px;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <img src="data:image/png;base64,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" alt="Velox Logo">
+        </div>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search the web or ask Velox AI...">
+        </div>
+    </header>
+
+    <main class="workspace">
+        <!-- Left Column: Real Live Web Search Directory -->
+        <section class="web-results" id="webResults"></section>
+
+        <!-- Right Column: Velox AI Sidebar Summary Panel -->
+        <section class="ai-sidebar" id="aiSidebar">
+            <div class="ai-header">
+                <span class="ai-badge">Velox AI</span>
+                <h2>Smart Summary</h2>
+            </div>
+            <div class="ai-content" id="aiContent"></div>
+        </section>
+    </main>
+
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        const webResults = document.getElementById('webResults');
+        const aiSidebar = document.getElementById('aiSidebar');
+        const aiContent = document.getElementById('aiContent');
+
+        searchInput.addEventListener('keydown', async function(e) {
+            if (e.key === 'Enter') {
+                const query = this.value.trim();
+                if (!query) return;
+
+                // Open workspace layouts immediately
+                webResults.style.display = 'block';
+                aiSidebar.style.display = 'block';
+
+                // Display async loading states in both sectors
+                webResults.innerHTML = `<span class="loading-pulse">Retrieving live web entries...</span>`;
+                aiContent.innerHTML = `<span class="loading-pulse">Waiting for search context confirmation...</span>`;
+
+                let searchContextText = "";
+
+                try {
+                    // Step 1: Query public JSON interface for real-time indexed answers
+                    const searchUrl = `https://duckduckgo.com{encodeURIComponent(query)}&format=json&no_redirect=1&no_html=1`;
+                    const searchResponse = await fetch(searchUrl);
+                    const searchData = await searchResponse.json();
+
+                    let resultsHTML = "";
+                    let targetItems = [];
+
+                    // Extract primary answers if present
+                    if (searchData.AbstractText) {
+                        targetItems.push({
+                            title: searchData.Heading || query,
+                            url: searchData.AbstractURL,
+                            snippet: searchData.AbstractText
+                        });
+                    }
+
+                    // Extract additional related index results
+                    if (searchData.RelatedTopics && searchData.RelatedTopics.length > 0) {
+                        searchData.RelatedTopics.forEach(topic => {
+                            if (topic.Text && topic.FirstURL && targetItems.length < 4) {
+                                // Extract a title from the beginning sentence text string
+                                const splitText = topic.Text.split(" - ");
+                                const title = splitText[0] || "Web Reference Result";
+                                const snippet = splitText[1] || topic.Text;
+                                targetItems.push({ title, url: topic.FirstURL, snippet });
+                            }
+                        });
+                    }
+
+                    // Fallback injection if the engine returns empty index files
+                    if (targetItems.length === 0) {
+                        targetItems.push({
+                            title: `Information references for "${query}"`,
